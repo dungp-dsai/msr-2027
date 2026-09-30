@@ -14,3 +14,5 @@ data/
 .cache/
 
 .env
+overleaf/
+.DS_Store

@@ -1,3 +1,42 @@
+# GitHub issues touched by triage workflows (label agreement)
+
+**Does not download all repo issues.** For each issue-triage workflow in
+`df_iss_triage_new` it:
+
+1. Lists Actions runs for that workflow’s `*.lock.yml` (`issues` /
+   `issue_comment` / `workflow_dispatch`)
+2. Resolves the linked issue number (`#N` in run title, else Search for the run URL)
+3. Fetches **only those issues** + per-issue timeline label events
+
+```bash
+# Skill-triage workflows first
+python -m gh_data_ingestion.download_github_issues --from-triage --skills-only
+
+# All issue-triage workflows
+python -m gh_data_ingestion.download_github_issues --from-triage
+
+# Smoke test
+python -m gh_data_ingestion.download_github_issues --from-triage --skills-only --limit-workflows 3 --runs-limit 20
+```
+
+Output: `data/github_issues/{owner}__{repo}/`
+
+```
+workflows/{workflow_name}/
+  runs.json
+  run_issue_map.json      # run_id → issue_number (+ how resolved)
+  touched_issues.json     # only issues this workflow touched
+  label_events.json
+  metadata.json
+issues/{number}.json      # shared cache across workflows in the repo
+timelines/{number}.json
+```
+
+Schedule-only sweeps (no per-issue run) are skipped for mapping until artifact
+parsing is added.
+
+---
+
 # gh-aw workflow corpus (all repos)
 
 Pull `.md` + `.lock.yml` pairs for every repo in `data/repos` (same layout as `data/2026-08-11`, **one folder**, no year-month split).
