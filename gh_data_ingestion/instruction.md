@@ -60,7 +60,7 @@ Resume is automatic and durable: after **every repo** and **every saved pair**, 
 
 # Workflow run extraction
 
-Extract GitHub Actions workflow runs (metadata, jobs, console logs, job logs, artifacts) via `extract_wflow_run.py`.
+Extract GitHub Actions workflow runs (metadata, jobs, console logs, job logs, artifacts) via `ingest_workflows_details.py`. Pass `owner/repo` and a `.lock.yml` file name. The script lists runs from `https://github.com/{owner}/{repo}/actions/workflows/{lock.yml}`.
 
 ## Setup
 
@@ -92,47 +92,35 @@ uv sync
 From the repo root:
 
 ```bash
-# One run (logs + artifacts)
-python -m gh_data_ingestion.extract_wflow_run owner/repo --run-id 123456789
-
-# Multiple specific runs
-python -m gh_data_ingestion.extract_wflow_run owner/repo --run-id 111 --run-id 222
-
-# Last N runs (default limit 10)
-python -m gh_data_ingestion.extract_wflow_run owner/repo --limit 20
-
-# Filter by workflow file / status / event / branch / created
-python -m gh_data_ingestion.extract_wflow_run owner/repo \
-  --workflow agent.yml --status completed --limit 20
-
-python -m gh_data_ingestion.extract_wflow_run owner/repo \
-  --event pull_request --branch main --created '>=2025-01-01' --limit 50
+# All runs of one lock workflow (metadata, logs, artifacts)
+python -m gh_data_ingestion.ingest_workflows_details \
+  0GiS0/github-agentic-workflows-demos issue-enhancer.lock.yml
 
 # List matching runs only (writes runs_index.json, no download)
-python -m gh_data_ingestion.extract_wflow_run owner/repo --limit 50 --list-only
+python -m gh_data_ingestion.ingest_workflows_details \
+  0GiS0/github-agentic-workflows-demos issue-enhancer.lock.yml --list-only
+
+# Cap how many runs are extracted
+python -m gh_data_ingestion.ingest_workflows_details \
+  owner/repo workflow.lock.yml --limit 20
+
+# Filter by status / event / branch / created
+python -m gh_data_ingestion.ingest_workflows_details owner/repo workflow.lock.yml \
+  --status completed --event issues --branch main --created '>=2025-01-01'
 
 # Only known gh-aw artifacts (agent, activation, firewall-audit-logs, ...)
-python -m gh_data_ingestion.extract_wflow_run owner/repo --run-id 123 --gh-aw-artifacts-only
-
-# Custom artifact names
-python -m gh_data_ingestion.extract_wflow_run owner/repo --run-id 123 \
-  --artifact-names agent activation
+python -m gh_data_ingestion.ingest_workflows_details owner/repo workflow.lock.yml \
+  --gh-aw-artifacts-only
 
 # Skip parts of the download
-python -m gh_data_ingestion.extract_wflow_run owner/repo --run-id 123 --no-artifacts
-python -m gh_data_ingestion.extract_wflow_run owner/repo --run-id 123 --no-job-logs
-python -m gh_data_ingestion.extract_wflow_run owner/repo --run-id 123 --no-logs
-
-# Keep raw zip archives under raw/
-python -m gh_data_ingestion.extract_wflow_run owner/repo --run-id 123 --keep-zips
-
-# Custom output directory
-python -m gh_data_ingestion.extract_wflow_run owner/repo --run-id 123 --out data/workflow_runs
+python -m gh_data_ingestion.ingest_workflows_details owner/repo workflow.lock.yml --no-artifacts
+python -m gh_data_ingestion.ingest_workflows_details owner/repo workflow.lock.yml --no-job-logs
+python -m gh_data_ingestion.ingest_workflows_details owner/repo workflow.lock.yml --no-logs
 ```
 
 ## Output layout
 
-Default: `data/workflow_runs/{owner}__{repo}__{run_id}/`
+Default: `data/workflow_details/{owner}__{repo}__{run_id}/`
 
 ```
 run.json              # run metadata
@@ -151,7 +139,7 @@ raw/                  # zip archives (only with --keep-zips)
 Listing without `--run-id` also writes:
 
 ```
-data/workflow_runs/{owner}__{repo}__runs_index.json
+data/workflow_details/{owner}__{repo}__{lock.yml}__runs_index.json
 ```
 
 ## Notes

@@ -1,6 +1,7 @@
 """Load collected gh-aw workflow markdown and lock YAML files."""
 
 import hashlib
+import json
 import math
 import re
 from pathlib import Path
@@ -87,6 +88,28 @@ def load_workflows_info(path: str = "data/workflow_info/workflows.csv") -> pd.Da
     if not file.is_absolute():
         file = REPO_ROOT / file
     return pd.read_csv(file)
+
+
+_RUN_SUMMARY_DIRS = {
+    "gh-aw": "data/workflow_details/gh_aw_workflows",
+    "non-gh-aw": "data/workflow_details/non_gh_aw_workflows",
+}
+
+
+def load_run_summaries(kind: str) -> pd.DataFrame:
+    """One row per downloaded run, from ``summary.json`` only.
+
+    ``kind`` is ``"gh-aw"`` or ``"non-gh-aw"``.
+    """
+    try:
+        folder = _RUN_SUMMARY_DIRS[kind]
+    except KeyError:
+        raise ValueError("kind must be 'gh-aw' or 'non-gh-aw'") from None
+    rows = [
+        json.loads(path.read_text(encoding="utf-8"))
+        for path in sorted(resolve_folder(folder).glob("*/summary.json"))
+    ]
+    return pd.DataFrame(rows)
 
 
 # Header written by data/gh-aw_raw/gh-aw-workflows.py before the file body.
