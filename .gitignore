@@ -16,3 +16,5 @@ data/
 .env
 overleaf/
 .DS_Store
+
+*.csv
