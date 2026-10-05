@@ -81,6 +81,14 @@ def load_gh_aw_config_files(path: str) -> pd.DataFrame:
     return pd.DataFrame(rows, columns=list(COLUMNS))
 
 
+def load_workflows_info(path: str = "data/workflow_info/workflows.csv") -> pd.DataFrame:
+    """Load Actions workflow records. Join to gh-aw on ``repo`` and ``yml_filename``."""
+    file = Path(path)
+    if not file.is_absolute():
+        file = REPO_ROOT / file
+    return pd.read_csv(file)
+
+
 # Header written by data/gh-aw_raw/gh-aw-workflows.py before the file body.
 HEADER_SEPARATOR = "=" * 80
 _HEADER_LINE = re.compile(r"^# ([^:\n]+):\s*(.*?)\s*$", re.MULTILINE)
